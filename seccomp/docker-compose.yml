@@ -1,0 +1,21 @@
+version: "2"
+services:
+
+  devel:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile.devel
+    volumes:
+      - .:/root
+    security_opt:
+      # - seccomp:unconfined
+      - seccomp:seccomp-profiles/deny.json
+      # - seccomp:"seccomp-profiles/deny.json"
+
+
+#      - seccomp:./seccomp-profiles/deny.json
+    command: bash -c "echo devel setup ready && tail -f /dev/null"
+
+
+
+# --host=net
