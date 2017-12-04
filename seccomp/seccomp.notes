@@ -1,0 +1,40 @@
+* seccomp
+
+  [[https://github.com/docker/labs/tree/master/security/seccomp][docker-seccomp-link]]
+
+  $ # run docker with no seccomp
+  $ docker run -it --security-opt seccomp:unconfined local/devel /usr/bin/bash
+
+  $ # find system calls a proccess uses
+  $ strace -c -f -S name whoami 2>&1 1>/dev/null | tail -n +3 | head -n -2 | awk '{print $(NF)}'
+
+  $ # ~/I like this better BUT IT INCLUDES MORE syscalls/~
+  $ # another way to find system calls a proccess uses
+  $ strace echo hi 2>&1 | grep -v '+++ exited' | cut -d'(' -f1 | grep -v ')' | sort | uniq
+
+
+    [jtappe@devmp0001d1mdw1 ~]$ docker run --net=host -it centos /bin/bash
+    [root@devmp0001d1mdw1 /]# curl google.com
+    <HTML><HEAD><meta http-equiv="content-type" content="text/html;charset=utf-8">
+    <TITLE>301 Moved</TITLE></HEAD><BODY>
+    <H1>301 Moved</H1>
+    The document has moved
+    <A HREF="http://www.google.com/">here</A>.
+    </BODY></HTML>
+
+** Step 1 - build a container that has strace
+   we need to build local/devel image because it has strace installed
+
+   docker build --network=host -f ./docker/Dockerfile.devel -t local/devel .
+
+** Step 2 run the image and execute strace on the application in question
+
+   run local/devel unconfined so we can see what all calls are made with strace
+   This will print out the syscall used by name
+
+   docker run -it --rm --security-opt seccomp:unconfined local/devel /usr/bin/bash -c "strace -c -f -S name echo 2>&1 1>/dev/null | tail -n +3 | head -n -2 | awk '{print \$(NF)}'"
+
+** Step 3 create a seccomp json profile for docker to use (see seccomp-profiles/echo.json) and use it to run echo, but it wont work with ls
+
+   docker run -it --rm --network=host --security-opt seccomp:./seccomp-profiles/echo.json local/devel /usr/bin/echo hi
+   docker run -it --rm --network=host --security-opt seccomp:./seccomp-profiles/echo.json local/devel /usr/bin/ls -alh

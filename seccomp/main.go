@@ -22,6 +22,6 @@ func ls() {
 }
 
 func main() {
-	fmt.Printf("hellow world \n")
-
+	fmt.Printf("hello world \n")
+	ls()
 }
